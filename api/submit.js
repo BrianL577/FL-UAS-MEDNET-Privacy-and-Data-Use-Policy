@@ -21,6 +21,55 @@ function formatDateAndTime(now) {
   return { date, time: `${time} ET` };
 }
 
+async function unboldAppendedRow({ token, spreadsheetId, tab, updatedRange }) {
+  if (!updatedRange) return;
+
+  const match = /![A-Z]+(\d+):[A-Z]+(\d+)/.exec(updatedRange);
+  if (!match) return;
+  const rowIndex = parseInt(match[1], 10) - 1;
+
+  try {
+    const metaResponse = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?fields=sheets.properties(sheetId,title)`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    if (!metaResponse.ok) return;
+    const meta = await metaResponse.json();
+    const sheet = (meta.sheets || []).find((s) => s.properties.title === tab);
+    if (!sheet) return;
+    const sheetId = sheet.properties.sheetId;
+
+    await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        requests: [
+          {
+            repeatCell: {
+              range: {
+                sheetId,
+                startRowIndex: rowIndex,
+                endRowIndex: rowIndex + 1,
+              },
+              cell: {
+                userEnteredFormat: {
+                  textFormat: { bold: false },
+                },
+              },
+              fields: "userEnteredFormat.textFormat.bold",
+            },
+          },
+        ],
+      }),
+    });
+  } catch (err) {
+    console.error("Unbold formatting error:", err);
+  }
+}
+
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
@@ -74,6 +123,14 @@ module.exports = async function handler(req, res) {
       console.error("Sheets API error:", sheetResponse.status, text);
       return res.status(502).json({ error: "Could not record submission." });
     }
+
+    const appendResult = await sheetResponse.json();
+    await unboldAppendedRow({
+      token,
+      spreadsheetId: GOOGLE_SHEET_ID,
+      tab,
+      updatedRange: appendResult?.updates?.updatedRange,
+    });
 
     return res.status(200).json({ ok: true });
   } catch (err) {
