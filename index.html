@@ -134,6 +134,31 @@
     </blockquote>
   </section>
 
+  <section id="acknowledgment">
+    <h2><span class="bar"></span>Acknowledgment</h2>
+    <p>By completing this form, you confirm that you have read and agree to the FL UAS MEDNET Working Group Privacy and Data-Use Policy above.</p>
+
+    <form id="ack-form" class="ack-form" novalidate>
+      <div class="field">
+        <label for="ack-name">Full name (digital signature)</label>
+        <input type="text" id="ack-name" name="name" maxlength="200" required autocomplete="name">
+      </div>
+
+      <div class="field">
+        <label for="ack-date">Date</label>
+        <input type="date" id="ack-date" name="date" required>
+      </div>
+
+      <div class="field checkbox-field">
+        <input type="checkbox" id="ack-agree" name="agree" required>
+        <label for="ack-agree">I have read and agree to the Privacy and Data-Use Policy above.</label>
+      </div>
+
+      <button type="submit" id="ack-submit">Submit</button>
+      <p id="ack-status" role="status" aria-live="polite"></p>
+    </form>
+  </section>
+
 </main>
 
 <footer class="site-footer">
@@ -141,5 +166,6 @@
     <p>FL UAS MEDNET Working Group &mdash; Privacy and Data-Use Policy</p>
   </div>
 </footer>
+<script src="app.js"></script>
 </body>
 </html>

@@ -176,3 +176,94 @@ blockquote {
     grid-template-columns: 1fr;
   }
 }
+
+.ack-form {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 24px;
+  font-family: "Helvetica Neue", Arial, sans-serif;
+}
+
+.ack-form .field {
+  margin-bottom: 18px;
+}
+
+.ack-form label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--navy);
+  margin-bottom: 6px;
+}
+
+.ack-form input[type="text"],
+.ack-form input[type="date"] {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 15px;
+  color: var(--ink);
+}
+
+.ack-form input[type="text"]:focus,
+.ack-form input[type="date"]:focus {
+  outline: 2px solid var(--blue);
+  outline-offset: 1px;
+}
+
+.checkbox-field {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.checkbox-field input[type="checkbox"] {
+  margin-top: 3px;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.checkbox-field label {
+  margin: 0;
+  font-weight: 400;
+  font-size: 14px;
+  color: var(--ink);
+}
+
+#ack-submit {
+  background: var(--blue);
+  color: #fff;
+  border: none;
+  padding: 12px 28px;
+  border-radius: 6px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+#ack-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+#ack-submit:hover:not(:disabled) {
+  background: #1c45b0;
+}
+
+#ack-status {
+  margin: 14px 0 0;
+  font-size: 14px;
+}
+
+.status-success {
+  color: #1a7f37;
+}
+
+.status-error {
+  color: #c0382b;
+}

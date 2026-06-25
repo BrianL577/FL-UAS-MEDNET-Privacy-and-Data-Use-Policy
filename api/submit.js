@@ -1,0 +1,72 @@
+const { JWT } = require("google-auth-library");
+
+const SCOPES = ["https://www.googleapis.com/auth/spreadsheets"];
+
+function isValidDate(value) {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const d = new Date(value);
+  return !Number.isNaN(d.getTime());
+}
+
+module.exports = async function handler(req, res) {
+  if (req.method !== "POST") {
+    res.setHeader("Allow", "POST");
+    return res.status(405).json({ error: "Method not allowed" });
+  }
+
+  const { name, date, agree } = req.body || {};
+
+  if (typeof name !== "string" || name.trim().length === 0 || name.trim().length > 200) {
+    return res.status(400).json({ error: "A valid name is required." });
+  }
+  if (!isValidDate(date)) {
+    return res.status(400).json({ error: "A valid date is required." });
+  }
+  if (agree !== true) {
+    return res.status(400).json({ error: "You must accept the policy to submit." });
+  }
+
+  const { GOOGLE_SERVICE_ACCOUNT_EMAIL, GOOGLE_PRIVATE_KEY, GOOGLE_SHEET_ID, GOOGLE_SHEET_TAB } = process.env;
+
+  if (!GOOGLE_SERVICE_ACCOUNT_EMAIL || !GOOGLE_PRIVATE_KEY || !GOOGLE_SHEET_ID) {
+    return res.status(500).json({ error: "Server is not configured." });
+  }
+
+  try {
+    const client = new JWT({
+      email: GOOGLE_SERVICE_ACCOUNT_EMAIL,
+      key: GOOGLE_PRIVATE_KEY.replace(/\\n/g, "\n"),
+      scopes: SCOPES,
+    });
+    const { token } = await client.getAccessToken();
+
+    const tab = GOOGLE_SHEET_TAB || "Sheet1";
+    const range = encodeURIComponent(`${tab}!A:E`);
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${GOOGLE_SHEET_ID}/values/${range}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`;
+
+    const submittedAt = new Date().toISOString();
+    const ip = (req.headers["x-forwarded-for"] || "").split(",")[0].trim() || req.socket?.remoteAddress || "";
+
+    const sheetResponse = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        values: [[submittedAt, name.trim(), date, "Agreed", ip]],
+      }),
+    });
+
+    if (!sheetResponse.ok) {
+      const text = await sheetResponse.text();
+      console.error("Sheets API error:", sheetResponse.status, text);
+      return res.status(502).json({ error: "Could not record submission." });
+    }
+
+    return res.status(200).json({ ok: true });
+  } catch (err) {
+    console.error("Submission error:", err);
+    return res.status(500).json({ error: "Unexpected server error." });
+  }
+};
