@@ -14,10 +14,15 @@ This is a plain static site (`index.html` + `styles.css`), no build step require
 
 ## Acknowledgment form → Google Sheet
 
-The page includes a name / date / agree-checkbox form at the bottom. On submit, it POSTs to
-the serverless function in `api/submit.js`, which appends a row (timestamp, name, date,
-"Agreed", submitter IP) to a Google Sheet using a Google Cloud **service account** — no Google
-account interaction from the visitor, and nothing client-side ever touches your credentials.
+The page includes a name / agree-checkbox form at the bottom (no date field — the date and
+time are recorded automatically by the server). On submit, it POSTs to the serverless function
+in `api/submit.js`, which appends a row (time, name, date, "Agreed", submitter IP) to a Google
+Sheet using a Google Cloud **service account** — no Google account interaction from the
+visitor, and nothing client-side ever touches your credentials. The "Timestamp" column holds
+the time of submission (e.g. `8:08 PM ET`) and the "Date" column holds the date (e.g.
+`6/24/2026`), both in US Eastern time. Rows are appended with `OVERWRITE` (write to the next
+empty row) rather than `INSERT_ROWS`, so they don't inherit the bold formatting of the header
+row above.
 
 This uses only free tiers: Vercel Hobby plan serverless functions and the Google Sheets API's
 free quota (far more than this form will ever use).

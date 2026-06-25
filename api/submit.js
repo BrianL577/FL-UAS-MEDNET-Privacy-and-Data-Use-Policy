@@ -1,11 +1,24 @@
 const { JWT } = require("google-auth-library");
 
 const SCOPES = ["https://www.googleapis.com/auth/spreadsheets"];
+const TIME_ZONE = "America/New_York";
 
-function isValidDate(value) {
-  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-  const d = new Date(value);
-  return !Number.isNaN(d.getTime());
+function formatDateAndTime(now) {
+  const date = new Intl.DateTimeFormat("en-US", {
+    timeZone: TIME_ZONE,
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+  }).format(now);
+
+  const time = new Intl.DateTimeFormat("en-US", {
+    timeZone: TIME_ZONE,
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).format(now);
+
+  return { date, time: `${time} ET` };
 }
 
 module.exports = async function handler(req, res) {
@@ -14,13 +27,10 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { name, date, agree } = req.body || {};
+  const { name, agree } = req.body || {};
 
   if (typeof name !== "string" || name.trim().length === 0 || name.trim().length > 200) {
     return res.status(400).json({ error: "A valid name is required." });
-  }
-  if (!isValidDate(date)) {
-    return res.status(400).json({ error: "A valid date is required." });
   }
   if (agree !== true) {
     return res.status(400).json({ error: "You must accept the policy to submit." });
@@ -42,9 +52,10 @@ module.exports = async function handler(req, res) {
 
     const tab = GOOGLE_SHEET_TAB || "Sheet1";
     const range = encodeURIComponent(`${tab}!A:E`);
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${GOOGLE_SHEET_ID}/values/${range}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`;
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${GOOGLE_SHEET_ID}/values/${range}:append?valueInputOption=USER_ENTERED&insertDataOption=OVERWRITE`;
 
-    const submittedAt = new Date().toISOString();
+    const now = new Date();
+    const { date, time } = formatDateAndTime(now);
     const ip = (req.headers["x-forwarded-for"] || "").split(",")[0].trim() || req.socket?.remoteAddress || "";
 
     const sheetResponse = await fetch(url, {
@@ -54,7 +65,7 @@ module.exports = async function handler(req, res) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        values: [[submittedAt, name.trim(), date, "Agreed", ip]],
+        values: [[time, name.trim(), date, "Agreed", ip]],
       }),
     });
 

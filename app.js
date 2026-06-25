@@ -1,7 +1,4 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const dateInput = document.getElementById("ack-date");
-  if (dateInput) dateInput.max = new Date().toISOString().slice(0, 10);
-
   const form = document.getElementById("ack-form");
   const submitBtn = document.getElementById("ack-submit");
   const statusEl = document.getElementById("ack-status");
@@ -12,14 +9,13 @@ document.addEventListener("DOMContentLoaded", () => {
     event.preventDefault();
 
     const name = document.getElementById("ack-name").value.trim();
-    const date = document.getElementById("ack-date").value;
     const agree = document.getElementById("ack-agree").checked;
 
     statusEl.textContent = "";
     statusEl.className = "";
 
-    if (!name || !date || !agree) {
-      statusEl.textContent = "Please fill in your name, date, and check the agreement box.";
+    if (!name || !agree) {
+      statusEl.textContent = "Please enter your name and check the agreement box.";
       statusEl.className = "status-error";
       return;
     }
@@ -31,7 +27,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const response = await fetch("/api/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, date, agree }),
+        body: JSON.stringify({ name, agree }),
       });
 
       const data = await response.json().catch(() => ({}));
