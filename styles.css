@@ -29,7 +29,7 @@ body {
 }
 
 .site-header {
-  background: linear-gradient(135deg, var(--navy), #163d6b);
+  background: linear-gradient(115deg, var(--navy) 0%, var(--blue) 45%, #7a2438 75%, var(--red) 100%);
   color: #fff;
   padding: 40px 0 40px;
 }
