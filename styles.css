@@ -2,6 +2,7 @@
   --navy: #0a2647;
   --blue: #2c5aa0;
   --red: #d92929;
+  --red-dark: #3a0d10;
   --ink: #1b2330;
   --muted: #5b6472;
   --bg: #f7f8fb;
@@ -29,7 +30,7 @@ body {
 }
 
 .site-header {
-  background: linear-gradient(90deg, var(--red) 0%, var(--navy) 16%, var(--blue) 34%, var(--blue) 66%, var(--navy) 84%, var(--red) 100%);
+  background: linear-gradient(90deg, var(--red-dark) 0%, var(--navy) 16%, var(--blue) 34%, var(--blue) 66%, var(--navy) 84%, var(--red-dark) 100%);
   color: #fff;
   padding: 40px 0 40px;
 }
