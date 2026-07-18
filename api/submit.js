@@ -3,22 +3,18 @@ const { JWT } = require("google-auth-library");
 const SCOPES = ["https://www.googleapis.com/auth/spreadsheets"];
 const TIME_ZONE = "America/New_York";
 
-function formatDateAndTime(now) {
-  const date = new Intl.DateTimeFormat("en-US", {
+function formatTimestamp(now) {
+  const formatted = new Intl.DateTimeFormat("en-US", {
     timeZone: TIME_ZONE,
     year: "numeric",
     month: "numeric",
     day: "numeric",
-  }).format(now);
-
-  const time = new Intl.DateTimeFormat("en-US", {
-    timeZone: TIME_ZONE,
     hour: "numeric",
     minute: "2-digit",
     hour12: true,
   }).format(now);
 
-  return { date, time: `${time} ET` };
+  return `${formatted} ET`;
 }
 
 async function unboldAppendedRow({ token, spreadsheetId, tab, updatedRange }) {
@@ -76,10 +72,14 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { name, agree } = req.body || {};
+  const { name, email, agree } = req.body || {};
 
   if (typeof name !== "string" || name.trim().length === 0 || name.trim().length > 200) {
     return res.status(400).json({ error: "A valid name is required." });
+  }
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (typeof email !== "string" || !EMAIL_RE.test(email.trim()) || email.trim().length > 200) {
+    return res.status(400).json({ error: "A valid work email is required." });
   }
   if (agree !== true) {
     return res.status(400).json({ error: "You must accept the policy to submit." });
@@ -100,11 +100,11 @@ module.exports = async function handler(req, res) {
     const { token } = await client.getAccessToken();
 
     const tab = GOOGLE_SHEET_TAB || "Sheet1";
-    const range = encodeURIComponent(`${tab}!A:E`);
+    const range = encodeURIComponent(`${tab}!A:D`);
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${GOOGLE_SHEET_ID}/values/${range}:append?valueInputOption=USER_ENTERED&insertDataOption=OVERWRITE`;
 
     const now = new Date();
-    const { date, time } = formatDateAndTime(now);
+    const timestamp = formatTimestamp(now);
     const ip = (req.headers["x-forwarded-for"] || "").split(",")[0].trim() || req.socket?.remoteAddress || "";
 
     const sheetResponse = await fetch(url, {
@@ -114,7 +114,7 @@ module.exports = async function handler(req, res) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        values: [[time, name.trim(), date, "Agreed", ip]],
+        values: [[timestamp, name.trim(), email.trim(), ip]],
       }),
     });
 
